@@ -1,55 +1,71 @@
 // Карточка товара 
-
 export interface ICard {
     _id: string;
     description: string;
     image: string;
     title: string
     category: string;
-    price: string;
+    price: number;
 }
 
 // Пользователь
-
 export interface IUser { 
     payment: string;
     email: string;
     phone: string;
     address: string;
-    total: string;
+    total: number;
     items: string;
 }
 
-// Корзина 
-
-export interface IBasket extends ICard, IUser{
+// Интерфейс корзины
+export interface IBasket extends ICard, IUser {
     title: string;
-    price: string;
-    total: string;
+    price: number;
+    total: number;
+    deleteBasketCard(card: ICard, payload: Function | null): void
+    changeTotal(total: number, payload: Function | null):void;
 }
 
-// Интерфейс в котором будет храниться карточки в корзине после добавления
-
-export interface IBasketData { 
-    preview: string | null // Будем отслеживать какие карточки поместили в корзину 
-    deleteCardsBasket(cardId: string, payload: Function | null): void; // метод удаления карточки из корзины 
+// Интерфейс взаимодействия с карточкой
+export interface ICardData {
+    cards: ICard[];
+    preview: string | null;
+    addBasket(cardId: string, payload: Function | null):void;
 }
 
-export interface IOrderCheck { 
-    checkValidationOrder(data: Record<keyof TModalOrder, string>):boolean; // отслеживаем на валидность первую часть оформления 
-    checkValidationData(data: Record<keyof TModalData, string>):boolean; // отслеживаем на валидность вторую часть оформления
+
+
+// Тип карточки товора 
+export type TCardInfo = Pick<ICard, 'category' | 'title' | 'image' | 'price'>;
+
+// Тип картчоки товара в модалном окне
+
+export type TCardModalInfo = Pick<ICard, 'image' | 'category' | 'title' | 'description' | 'price'>;
+
+// Тип данных в модалке корзины 
+
+export type TBasketInfo = Pick<IBasket, 'title' | 'price' | 'title'>;
+
+// Тип данных в модальном окне оформления заказа способ оплаты и адрес
+
+export type TModalOrderPayment = Pick<IUser, 'payment' | 'address'>;
+
+// Тип данных в модальном окне офрмления заказа почта и телефон
+
+export type TModalOrderData = Pick<IUser, 'email' | 'phone'>;
+
+// Тип данных в модальном окне после оформления заказа
+
+export type TModalВecorated = Pick<IUser, 'total'>
+
+
+export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+export interface IApi {
+    baseUrl: string;
+    get<T>(uri: string): Promise<T>;
+    post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
 }
 
-// Типы данных 
 
-export type TCardInfo = Pick<ICard, 'title' | 'category' | 'price'>;
-
-export type TCardModal = Pick<ICard, 'category' | 'title' | 'description'| 'price'>;
-
-export type TModalBasket = Pick<IBasket, 'title' | 'price' | 'total'>;
-
-export type TModalOrder = Pick<IUser, 'payment' | 'address'>;
-
-export type TModalData = Pick<IUser, 'email' | 'phone'>
-
-export type TModalTotalOrder = Pick<IUser, 'total'>
