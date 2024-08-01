@@ -10,6 +10,7 @@ interface IModalData {
 export class Modal extends Component<IModalData> {
   protected _closeButton: HTMLButtonElement;
   protected _content: HTMLElement;
+  private clearBasketOnClose: boolean = false;
 
   constructor(container: HTMLElement, protected events: IEvents) {
     super(container);
@@ -34,7 +35,15 @@ export class Modal extends Component<IModalData> {
   close() {
       this.container.classList.remove('modal_active');
       this.content = null;
+      if (this.clearBasketOnClose) {
+        this.clearBasketOnClose = false;
+        this.events.emit('basket:clear');
+      }
       this.events.emit('modal:close');
+  }
+
+  setClearBasketOnClose(clear: boolean) {
+    this.clearBasketOnClose = clear;
   }
 
   render(data: IModalData): HTMLElement {

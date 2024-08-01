@@ -7,6 +7,15 @@ export interface IProductItem {
   price: number | null;
 }
 
+export interface IProduct{
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  image: string;
+  price: number | null;
+} 
+
 export interface IProductsList {
   products: IProductItem[];
 }

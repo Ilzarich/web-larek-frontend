@@ -1,10 +1,10 @@
-import { FormErrors, IAppState, IOrder, IOrderForm, IProductItem } from "../types";
+import { FormErrors, IAppState, IProduct, IOrder, IOrderForm, IProductItem } from "../types";
 import { Model } from "./base/Model";
 
 export class AppData extends Model<IAppState> {
-  catalog: Product[];
+  catalog: IProduct[];
   preview: string;
-  basket: Product[] = [];
+  basket: IProduct[] = [];
   order: IOrder = {
     address: '',
     payment: 'card',
@@ -14,17 +14,24 @@ export class AppData extends Model<IAppState> {
     items: []
   };
   formErrors: FormErrors = {};
+  totalSpent: number = 0;
 
   clearBasket() {
+    this.totalSpent = this.getTotal();
     this.basket = []
     this.order.items = []
+
   }
 
-  addToOrder(item: Product) {
-    this.order.items.push(item.id)
+  addToOrder(item: IProduct) {
+    if(item.price !== null) {
+      this.order.items.push(item.id);
+    } else {
+      this.events.emit('Невозможно добавить товар без цены в корзину')
+    }
   }
   
-  removeFromOrder(item: Product) {
+  removeFromOrder(item: IProduct) {
     const index = this.order.items.indexOf(item.id);
     if (index >= 0) {
       this.order.items.splice( index, 1 );
@@ -32,20 +39,22 @@ export class AppData extends Model<IAppState> {
   }
 
   setCatalog(items: IProductItem[]) {
-    this.catalog = items.map(item => new Product(item, this.events));
+    this.catalog = items.map(item => ({...item} as IProduct));
     this.emitChanges('items:changed', { catalog: this.catalog });
   }
 
-  setPreview(item: Product) {
+  setPreview(item: IProduct) {
     this.preview = item.id;
     this.emitChanges('preview:changed', item);
   }
 
-  setProductToBasket(item: Product) {
-    this.basket.push(item)
+  setProductToBasket(item: IProduct) {
+    if(item.price !== null){
+      this.basket.push(item)
+    }
   }
 
-  removeProductToBasket(item: Product) {
+  removeProductToBasket(item: IProduct) {
     const index = this.basket.indexOf(item);
     if (index >= 0) {
       this.basket.splice( index, 1 );
@@ -56,7 +65,7 @@ export class AppData extends Model<IAppState> {
     return this.basket.length === 0
   }
   
-  get bskt(): Product[] {
+  get bskt(): IProduct[] {
     return this.basket
   }
 
@@ -107,15 +116,4 @@ export class AppData extends Model<IAppState> {
       this.events.emit('formErrors:change', this.formErrors);
       return Object.keys(errors).length === 0;
   }
-
-}
-
-
-export class Product extends Model<IProductItem> {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  image: string;
-  price: number | null;
 }

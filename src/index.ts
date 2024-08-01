@@ -4,13 +4,13 @@ import { EventEmitter } from './components/base/events';
 import { API_URL, CDN_URL } from './utils/constants';
 import { LarekApi } from './components/LarekApi';
 import { cloneTemplate, ensureElement } from './utils/utils';
-import { AppData, Product } from './components/AppData';
+import { AppData } from './components/AppData';
 import { Page } from './components/Page';
 import { Card, CardBasket, CardPreview } from './components/Card';
 import { Modal } from './components/common/Modal';
 import { Basket } from './components/common/Basket';
 import { Order, Сontacts } from './components/Order';
-import { IOrderForm } from './types';
+import { IOrderForm, IProduct } from './types';
 import { Success } from './components/common/Success';
 
 const emitter = new EventEmitter();
@@ -38,6 +38,18 @@ const basket = new Basket(cloneTemplate<HTMLTemplateElement>(basketTpl), emitter
 const order = new Order(cloneTemplate<HTMLFormElement>(orderTpl), emitter);
 const contacts = new Сontacts(cloneTemplate<HTMLFormElement>(contactsTpl), emitter);
 
+const success = new Success(cloneTemplate(successTpl), {
+  onClick: () => {
+    modal.close(); 
+    appData.clearBasket(); 
+  }
+})
+
+emitter.on('basket:clear', () => {
+  appData.clearBasket();
+  page.counter = appData.bskt.length; 
+});
+
 
 emitter.on('items:changed', () => {
   page.catalog = appData.catalog.map((item) => {
@@ -53,11 +65,11 @@ emitter.on('items:changed', () => {
   })
 })
 
-emitter.on('card:select', (item: Product) => {
+emitter.on('card:select', (item: IProduct) => {
   appData.setPreview(item); 
 });
 
-emitter.on('preview:changed', (item: Product) => {
+emitter.on('preview:changed', (item: IProduct) => {
   const card = new CardPreview(cloneTemplate(cardPreviewTpl), {
     onClick: () => emitter.emit('card:add', item)
   });
@@ -74,38 +86,34 @@ emitter.on('preview:changed', (item: Product) => {
 });
 
 
-emitter.on('card:add', (item: Product) => {
-  appData.addToOrder(item);
-  appData.setProductToBasket(item);
-  page.counter = appData.bskt.length;
-  modal.close();
+emitter.on('card:add', (item: IProduct) => {
+  if(item.price !== null) {
+    appData.addToOrder(item);
+    appData.setProductToBasket(item);
+    page.counter = appData.bskt.length;
+    modal.close();
+  } else {
+    emitter.emit('Невозможно добавить товар без цены в корзину');
+  }
 })
 
 
 emitter.on('basket:open', () => {
-  basket.setDisabled(basket.button, appData.statusBasket);
-  basket.total = appData.getTotal();
-  let i = 1;
-  basket.items = appData.bskt.map((item) => {
-    const card = new CardBasket(cloneTemplate(cardBasketTpl), {
-      onClick: () => emitter.emit('card:remove', item)
-    });
-    return card.render({
-      title: item.title,
-      price: item.price,
-      index: i++
-    });
-  })
   modal.render({
     content: basket.render()
-  })
-})
+  });
+  emitter.emit('basket:change');
+});
 
 
-emitter.on('card:remove', (item: Product) => {
+emitter.on('card:remove', (item: IProduct) => {
   appData.removeProductToBasket(item);
   appData.removeFromOrder(item);
   page.counter = appData.bskt.length;
+  emitter.emit('basket:change');
+});
+
+emitter.on('basket:change', () => {
   basket.setDisabled(basket.button, appData.statusBasket);
   basket.total = appData.getTotal();
   let i = 1;
@@ -118,11 +126,8 @@ emitter.on('card:remove', (item: Product) => {
       price: item.price,
       index: i++
     });
-  })
-  modal.render({
-    content: basket.render()
-  })
-})
+  });
+});
 
 emitter.on('formErrors:change', (errors: Partial<IOrderForm>) => {
   const { email, phone, address, payment } = errors;
@@ -167,28 +172,21 @@ emitter.on('order:submit', () => {
   });
 })
 
-emitter.on('contacts:submit', () => {
-  api.orderProducts(appData.order)
-    .then((result) => {
-      console.log(appData.order)
-      const success = new Success(cloneTemplate(successTpl), {
-        onClick: () => {
-          modal.close();
-          appData.clearBasket();
-          page.counter = appData.bskt.length;
-        }
-      });
-    
-      modal.render({
-        content: success.render({
-          total: appData.getTotal()
-        })
-      })
+emitter.on('contacts:submit', () => { 
+  api.orderProducts(appData.order) 
+    .then((result) => { 
+      console.log(appData.order) 
+      modal.setClearBasketOnClose(true)
+      modal.render({ 
+        content: success.render({ 
+          total: appData.getTotal() 
+        }) 
+      }) 
+    }) 
+    .catch(err => { 
+      console.error(err); 
     })
-    .catch(err => {
-      console.error(err);
-    })
-});
+}); 
 
 emitter.on('modal:open', () => {
     page.locked = true;
