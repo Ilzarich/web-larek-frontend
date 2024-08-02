@@ -2,7 +2,6 @@ import { ensureElement } from "../../utils/utils";
 import { Component } from "../base/Component";
 import { IEvents } from "../base/events";
 
-
 interface IModalData {
   content: HTMLElement;
 }
@@ -10,7 +9,6 @@ interface IModalData {
 export class Modal extends Component<IModalData> {
   protected _closeButton: HTMLButtonElement;
   protected _content: HTMLElement;
-  private clearBasketOnClose: boolean = false;
 
   constructor(container: HTMLElement, protected events: IEvents) {
     super(container);
@@ -28,27 +26,19 @@ export class Modal extends Component<IModalData> {
   }
 
   open() {
-      this.container.classList.add('modal_active');
-      this.events.emit('modal:open');
+    this.container.classList.add('modal_active');
+    this.events.emit('modal:open');
   }
 
   close() {
-      this.container.classList.remove('modal_active');
-      this.content = null;
-      if (this.clearBasketOnClose) {
-        this.clearBasketOnClose = false;
-        this.events.emit('basket:clear');
-      }
-      this.events.emit('modal:close');
-  }
-
-  setClearBasketOnClose(clear: boolean) {
-    this.clearBasketOnClose = clear;
+    this.container.classList.remove('modal_active');
+    this.content = null;
+    this.events.emit('modal:close');
   }
 
   render(data: IModalData): HTMLElement {
-      super.render(data);
-      this.open();
-      return this.container;
+    super.render(data);
+    this.open();
+    return this.container;
   }
 }

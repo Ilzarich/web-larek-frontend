@@ -20,7 +20,6 @@ export class AppData extends Model<IAppState> {
     this.totalSpent = this.getTotal();
     this.basket = []
     this.order.items = []
-
   }
 
   addToOrder(item: IProduct) {
@@ -117,3 +116,4 @@ export class AppData extends Model<IAppState> {
       return Object.keys(errors).length === 0;
   }
 }
+

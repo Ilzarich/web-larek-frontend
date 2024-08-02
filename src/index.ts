@@ -41,15 +41,21 @@ const contacts = new Сontacts(cloneTemplate<HTMLFormElement>(contactsTpl), emit
 const success = new Success(cloneTemplate(successTpl), {
   onClick: () => {
     modal.close(); 
-    appData.clearBasket(); 
+    emitter.emit('basket:clear')
   }
 })
 
 emitter.on('basket:clear', () => {
-  appData.clearBasket();
-  page.counter = appData.bskt.length; 
+  appData.clearBasket();  
+  emitter.emit('basket:updateCounter')
+  emitter.emit('basket:change')
 });
 
+let clearBasketOnClose = false;
+
+emitter.on('basket:updateCounter', () => {
+  page.counter = appData.bskt.length
+})
 
 emitter.on('items:changed', () => {
   page.catalog = appData.catalog.map((item) => {
@@ -90,7 +96,8 @@ emitter.on('card:add', (item: IProduct) => {
   if(item.price !== null) {
     appData.addToOrder(item);
     appData.setProductToBasket(item);
-    page.counter = appData.bskt.length;
+    emitter.emit('basket:updateCounter');
+    emitter.emit('basket:change')
     modal.close();
   } else {
     emitter.emit('Невозможно добавить товар без цены в корзину');
@@ -102,14 +109,13 @@ emitter.on('basket:open', () => {
   modal.render({
     content: basket.render()
   });
-  emitter.emit('basket:change');
 });
 
 
 emitter.on('card:remove', (item: IProduct) => {
   appData.removeProductToBasket(item);
   appData.removeFromOrder(item);
-  page.counter = appData.bskt.length;
+  emitter.emit('basket:updateCounter');
   emitter.emit('basket:change');
 });
 
@@ -175,17 +181,17 @@ emitter.on('order:submit', () => {
 emitter.on('contacts:submit', () => { 
   api.orderProducts(appData.order) 
     .then((result) => { 
-      console.log(appData.order) 
-      modal.setClearBasketOnClose(true)
+      console.log(appData.order);
       modal.render({ 
         content: success.render({ 
           total: appData.getTotal() 
         }) 
-      }) 
+      }); 
+      clearBasketOnClose = true; 
     }) 
     .catch(err => { 
       console.error(err); 
-    })
+    });
 }); 
 
 emitter.on('modal:open', () => {
@@ -194,6 +200,10 @@ emitter.on('modal:open', () => {
 
 emitter.on('modal:close', () => {
     page.locked = false;
+    if (clearBasketOnClose) {
+      emitter.emit('basket:clear');
+      clearBasketOnClose = false;
+    }
 });
 
 api.getProductList()

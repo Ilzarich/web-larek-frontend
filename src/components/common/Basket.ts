@@ -12,7 +12,6 @@ export class Basket extends Component<IBasket> {
   protected _list: HTMLElement;
   protected _total: HTMLElement;
   button: HTMLElement;
-
   constructor(container: HTMLElement, protected events: EventEmitter) {
     super(container);
 
@@ -42,4 +41,5 @@ export class Basket extends Component<IBasket> {
   set total(total: number) {
     this.setText(this._total, `${total} синапсов`);
   }
+  
 }
