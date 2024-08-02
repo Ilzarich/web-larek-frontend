@@ -187,7 +187,7 @@ emitter.on('contacts:submit', () => {
           total: appData.getTotal() 
         }) 
       }); 
-      clearBasketOnClose = true; 
+      emitter.emit('basket:clear')
     }) 
     .catch(err => { 
       console.error(err); 
@@ -200,10 +200,6 @@ emitter.on('modal:open', () => {
 
 emitter.on('modal:close', () => {
     page.locked = false;
-    if (clearBasketOnClose) {
-      emitter.emit('basket:clear');
-      clearBasketOnClose = false;
-    }
 });
 
 api.getProductList()
